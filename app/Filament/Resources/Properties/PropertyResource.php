@@ -4,6 +4,10 @@ namespace App\Filament\Resources\Properties;
 
 use App\Filament\Resources\Properties\Pages;
 use App\Models\Property;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;

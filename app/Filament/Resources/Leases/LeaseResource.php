@@ -31,7 +31,7 @@ class LeaseResource extends Resource
                     ->schema([
                         // Pilih Penghuni
                         Select::make('tenant_id')
-                            ->relationship('tenant', 'nama_tenant')
+                            ->relationship('tenant', 'name')
                             ->searchable()
                             ->preload()
                             ->required()
@@ -39,7 +39,7 @@ class LeaseResource extends Resource
 
                         // Pilih Properti
                         Select::make('property_id')
-                            ->relationship('properties', 'nama_property')
+                            ->relationship('property', 'name')
                             ->searchable()
                             ->preload()
                             ->required()
@@ -142,6 +142,66 @@ class LeaseResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                // 👇 TOMBOL KIRIM WA BARU
+                Tables\Actions\Action::make('kirim_tagihan')
+                    ->label('Tagih WA')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->color('success') // Warna Hijau
+                    ->requiresConfirmation() // Minta konfirmasi dulu biar gak kepencet
+                    ->modalHeading('Kirim Tagihan WhatsApp')
+                    ->modalDescription('Apakah Anda yakin ingin mengirim rincian tagihan ke penyewa ini?')
+                    ->modalSubmitActionLabel('Ya, Kirim Sekarang')
+                    ->action(function (Lease $record) {
+                        // 1. Siapkan Pesan
+                        $pesan = "Halo *{$record->tenant->name}*,\n\n" .
+                            "Kami mengingatkan rincian pembayaran sewa properti Anda:\n" .
+                            "🏠 Properti: {$record->property->name}\n" .
+                            "📅 Jatuh Tempo: " . ($record->next_due_date ? $record->next_due_date->format('d M Y') : '-') . "\n" .
+                            "💰 Total Tagihan: Rp " . number_format($record->price, 0, ',', '.') . "\n" .
+                            "💵 Sudah Dibayar: Rp " . number_format($record->amount_paid, 0, ',', '.') . "\n\n" .
+                            "Mohon segera melakukan pembayaran. Terima kasih!";
+
+                        // 2. Kirim via Service Fonnte
+                        // Pastikan nomor HP ada
+                        if (!$record->tenant->phone_number) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Gagal')
+                                ->body('Nomor HP penyewa tidak ditemukan!')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        // Panggil Service yang tadi kita buat
+                        $response = \App\Services\FonnteService::send(
+                            $record->tenant->phone_number,
+                            $pesan
+                        );
+
+                        // 3. Notifikasi Sukses/Gagal di Layar Admin
+                        if (isset($response['status']) && $response['status'] == true) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Terkirim')
+                                ->body('Pesan WhatsApp berhasil dikirim ke antrean Fonnte.')
+                                ->success()
+                                ->send();
+                        } else {
+                            // \Filament\Notifications\Notification::make()
+                            //     ->title('Gagal Kirim')
+                            //     ->body('Cek Token Fonnte Anda atau koneksi internet.')
+                            //     ->danger()
+                            //     ->send();
+                            // 👇 MODIFIKASI BAGIAN INI UNTUK DEBUGGING
+                            // Kita ambil pesan error asli dari Fonnte/Server
+                            $errorDetail = $response['reason'] ?? $response['detail'] ?? 'Tidak ada respon dari server';
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Gagal Kirim')
+                                ->body('Info Error: ' . $errorDetail) // Tampilkan error aslinya disini
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ]);
     }
 

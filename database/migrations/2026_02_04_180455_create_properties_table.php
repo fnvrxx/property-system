@@ -12,9 +12,9 @@ return new class extends Migration {
     {
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_properti');
+            $table->string('name');
             $table->enum('type', ['kos', 'tanah', 'bangunan', 'apartemen']);
-            $table->text('alamat')->nullable();
+            $table->text('address')->nullable();
             $table->decimal('base_price', 15, 2)->default(0);
             $table->boolean('is_available')->default(true);
             $table->timestamps();
