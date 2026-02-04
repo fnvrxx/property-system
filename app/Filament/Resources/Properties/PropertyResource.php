@@ -2,49 +2,127 @@
 
 namespace App\Filament\Resources\Properties;
 
-use App\Filament\Resources\Properties\Pages\CreateProperty;
-use App\Filament\Resources\Properties\Pages\EditProperty;
-use App\Filament\Resources\Properties\Pages\ListProperties;
-use App\Filament\Resources\Properties\Schemas\PropertyForm;
-use App\Filament\Resources\Properties\Tables\PropertiesTable;
+use App\Filament\Resources\Properties\Pages;
 use App\Models\Property;
-use BackedEnum;
+use Filament\Forms;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
+use Filament\Tables;
 use Filament\Tables\Table;
 
 class PropertyResource extends Resource
 {
     protected static ?string $model = Property::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $navigationIcon = 'heroicon-o-home-modern';
 
     protected static ?string $recordTitleAttribute = 'property';
 
-    public static function form(Schema $schema): Schema
+    protected static ?string $navigationLabel = 'Data Properti';
+    protected static ?string $slug = 'properties';
+
+    public static function form(Form $form): Form
     {
-        return PropertyForm::configure($schema);
+        return $form
+            ->schema([
+                Forms\Components\Section::make('Detail Aset')
+                    ->schema([
+                        TextInput::make('name')
+                            ->required()
+                            ->label('Nama Properti')
+                            ->placeholder('Contoh: Kamar A1, Ruko Blok B')
+                            ->maxLength(255),
+
+                        Select::make('type')
+                            ->options([
+                                'kos' => 'Kamar Kos',
+                                'tanah' => 'Tanah Kavling',
+                                'bangunan' => 'Ruko / Bangunan',
+                                'apartemen' => 'Apartemen',
+                            ])
+                            ->required()
+                            ->default('kos')
+                            ->label('Jenis Aset'),
+
+                        TextInput::make('base_price')
+                            ->numeric()
+                            ->prefix('Rp')
+                            ->label('Harga Dasar')
+                            ->helperText('Harga standar sewa (bisa diubah saat transaksi)'),
+
+                        Toggle::make('is_available')
+                            ->label('Tersedia?')
+                            ->default(true)
+                            ->onIcon('heroicon-m-check')
+                            ->offIcon('heroicon-m-x-mark')
+                            ->onColor('success')
+                            ->offColor('danger'),
+
+                        Textarea::make('address')
+                            ->label('Alamat / Lokasi')
+                            ->rows(3)
+                            ->columnSpanFull(),
+                    ])->columns(2),
+            ]);
     }
 
     public static function table(Table $table): Table
     {
-        return PropertiesTable::configure($table);
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Nama Aset')
+                    ->weight('bold'),
+
+                Tables\Columns\TextColumn::make('type')
+                    ->badge()
+                    ->label('Tipe')
+                    ->colors([
+                        'primary' => 'kos',
+                        'warning' => 'tanah',
+                        'success' => 'bangunan',
+                    ])
+                    ->formatStateUsing(fn(string $state): string => ucfirst($state)),
+
+                Tables\Columns\TextColumn::make('base_price')
+                    ->money('IDR')
+                    ->label('Harga Dasar'),
+
+                Tables\Columns\IconColumn::make('is_available')
+                    ->boolean()
+                    ->label('Status')
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('type')
+                    ->options([
+                        'kos' => 'Kamar Kos',
+                        'tanah' => 'Tanah',
+                        'bangunan' => 'Bangunan',
+                    ]),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ]);
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListProperties::route('/'),
-            'create' => CreateProperty::route('/create'),
-            'edit' => EditProperty::route('/{record}/edit'),
+            'index' => Pages\ListProperties::route('/'),
+            'create' => Pages\CreateProperty::route('/create'),
+            'edit' => Pages\EditProperty::route('/{record}/edit'),
         ];
     }
 }

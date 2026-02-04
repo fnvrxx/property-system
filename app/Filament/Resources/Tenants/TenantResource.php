@@ -2,49 +2,94 @@
 
 namespace App\Filament\Resources\Tenants;
 
-use App\Filament\Resources\Tenants\Pages\CreateTenant;
-use App\Filament\Resources\Tenants\Pages\EditTenant;
-use App\Filament\Resources\Tenants\Pages\ListTenants;
-use App\Filament\Resources\Tenants\Schemas\TenantForm;
-use App\Filament\Resources\Tenants\Tables\TenantsTable;
+use App\Filament\Resources\Tenants\Pages;
 use App\Models\Tenant;
-use BackedEnum;
+use Filament\Forms;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
+use Filament\Tables;
 use Filament\Tables\Table;
 
 class TenantResource extends Resource
 {
     protected static ?string $model = Tenant::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $navigationLabel = 'Data Penyewa';
+    protected static ?string $slug = 'tenants';
 
-    protected static ?string $recordTitleAttribute = 'tenant';
-
-    public static function form(Schema $schema): Schema
+    public static function form(Form $form): Form
     {
-        return TenantForm::configure($schema);
+        return $form
+            ->schema([
+                Forms\Components\Section::make('Biodata Penyewa')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->label('Nama Lengkap')
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('phone_number')
+                            ->tel()
+                            ->required()
+                            ->label('Nomor WhatsApp')
+                            ->placeholder('Contoh: 08123456789')
+                            ->helperText('Nomor ini akan digunakan untuk pengiriman notifikasi otomatis.'),
+
+                        Forms\Components\TextInput::make('identity_number')
+                            ->label('No. KTP / Identitas')
+                            ->placeholder('NIK atau Nomor SIM (Opsional)')
+                            ->maxLength(20),
+                    ])->columns(2),
+            ]);
     }
 
     public static function table(Table $table): Table
     {
-        return TenantsTable::configure($table);
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Nama')
+                    ->weight('bold'),
+
+                Tables\Columns\TextColumn::make('phone_number')
+                    ->searchable()
+                    ->copyable()
+                    ->label('WhatsApp')
+                    ->icon('heroicon-m-phone'),
+
+                Tables\Columns\TextColumn::make('identity_number')
+                    ->label('No. Identitas')
+                    ->toggleable(isToggledHiddenByDefault: true), // Sembunyikan default agar tabel rapi
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Terdaftar Pada'),
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ]);
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListTenants::route('/'),
-            'create' => CreateTenant::route('/create'),
-            'edit' => EditTenant::route('/{record}/edit'),
+            'index' => Pages\ListTenants::route('/'),
+            'create' => Pages\CreateTenant::route('/create'),
+            'edit' => Pages\EditTenant::route('/{record}/edit'),
         ];
     }
 }

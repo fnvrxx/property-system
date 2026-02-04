@@ -1,8 +1,11 @@
 <?php
 
-namespace App\Filament\Resources\Leases; // 👈 PERBAIKAN 1: Namespace harus sesuai nama folder
+namespace App\Filament\Resources\Leases;
 
-use App\Filament\Resources\Leases\Pages; // 👈 PERBAIKAN 2: Path ke Pages
+// use App\Filament\Resources\Leases\LeaseResource\Pages; 
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
 use App\Models\Lease;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -10,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\Leases\Pages;
 
 class LeaseResource extends Resource
 {
@@ -26,23 +30,23 @@ class LeaseResource extends Resource
                 Forms\Components\Section::make('Informasi Kontrak')
                     ->schema([
                         // Pilih Penghuni
-                        Forms\Components\Select::make('tenant_id')
-                            ->relationship('tenant', 'name')
+                        Select::make('tenant_id')
+                            ->relationship('tenant', 'nama_tenant')
                             ->searchable()
                             ->preload()
                             ->required()
                             ->label('Penyewa'),
 
                         // Pilih Properti
-                        Forms\Components\Select::make('property_id')
-                            ->relationship('property', 'name')
+                        Select::make('property_id')
+                            ->relationship('properties', 'nama_property')
                             ->searchable()
                             ->preload()
                             ->required()
                             ->label('Properti'),
 
                         // Tipe Bayar
-                        Forms\Components\Select::make('payment_frequency')
+                        Select::make('payment_frequency')
                             ->options([
                                 'harian' => 'Harian',
                                 'mingguan' => 'Mingguan',
@@ -52,7 +56,7 @@ class LeaseResource extends Resource
                             ->required()
                             ->label('Tipe Bayar'),
 
-                        Forms\Components\DatePicker::make('start_date')
+                        DatePicker::make('start_date')
                             ->required()
                             ->label('Tanggal Masuk'),
                     ])->columns(2),
