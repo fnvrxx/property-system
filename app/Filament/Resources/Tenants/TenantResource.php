@@ -16,7 +16,7 @@ class TenantResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationLabel = 'Data Penyewa';
-    protected static ?string $slug = 'tenants';
+    protected static ?string $slug = 'penyewa';
 
     public static function form(Form $form): Form
     {
@@ -34,7 +34,7 @@ class TenantResource extends Resource
                             ->required()
                             ->label('Nomor WhatsApp')
                             ->placeholder('Contoh: 08123456789')
-                            ->helperText('Nomor ini akan digunakan untuk pengiriman notifikasi otomatis.'),
+                            ->helperText('Gunakan nomor telepon yang aktif di WhatsApp'),
 
                         Forms\Components\TextInput::make('identity_number')
                             ->label('No. KTP / Identitas')

@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Leases;
 // use App\Filament\Resources\Leases\LeaseResource\Pages; 
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 use Filament\Forms\Components\DatePicker;
 use App\Models\Lease;
 use Filament\Forms;
@@ -116,6 +118,11 @@ class LeaseResource extends Resource
                     ->sortable()
                     ->label('Jatuh Tempo'),
 
+                Tables\Columns\TextColumn::make('start_date')
+                    ->date()
+                    ->sortable()
+                    ->label('Tanggal Mulai'),
+
                 Tables\Columns\TextColumn::make('shortage')
                     ->money('IDR')
                     ->label('Kurang Bayar')
@@ -139,7 +146,17 @@ class LeaseResource extends Resource
                         }
                         return $query;
                     }),
-            ])
+            ])->headerActions([
+                    ExportAction::make()
+                        ->exports([
+                            ExcelExport::make()
+                                ->fromTable() // Otomatis ambil kolom yang tampil di tabel
+                                ->withFilename('Laporan-Sewa-' . date('Y-m-d'))
+                        ])
+                        ->label('Download Laporan Excel')
+                        ->color('success') // Warna hijau excel
+                        ->icon('heroicon-o-document-arrow-down'),
+                ])
             ->actions([
                 Tables\Actions\EditAction::make(),
                 // 👇 TOMBOL KIRIM WA BARU
@@ -202,7 +219,12 @@ class LeaseResource extends Resource
                                 ->send();
                         }
                     }),
-            ]);
+            ])->bulkActions([
+                    Tables\Actions\BulkActionGroup::make([
+                        Tables\Actions\DeleteBulkAction::make()
+                    ]),
+                ]);
+        ;
     }
 
     public static function getRelations(): array
